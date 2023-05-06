@@ -3,7 +3,7 @@ const cors = require('cors')
 
 const app = express();
 
-const whitelist = ['https://mini-social-front-5c8mhjdvm-allexkzk.vercel.app/*']; 
+const whitelist = ['https://mini-social-front-5c8mhjdvm-allexkzk.vercel.app/']; 
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1) {
