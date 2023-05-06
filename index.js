@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors')
+const mysql = require('mysql')
 
 const app = express();
 
@@ -13,8 +14,21 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+const pool = mysql.createPool({
+    host: 'ben1e8tljjivtlkrlih5-mysql.services.clever-cloud.com',
+    user: 'uv68wkbxill75bjc',
+    password: 'SQWjlU4uQEFBPGAmdUcL',
+    database: 'ben1e8tljjivtlkrlih5'
+});
+
+
 app.get('/api/', (req, res) => {
-    res.send({ message: 'Hello world!' });
+    pool.query("SELECT message FROM test", function(err, data) {
+        if(err) 
+            return console.log(err);
+        console.log(data);
+        res.send({ message: data[0] });
+    });
 });
 
 app.listen(5000);
