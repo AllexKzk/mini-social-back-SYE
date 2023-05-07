@@ -14,15 +14,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.get('/api/', (req, res) => {
-    pool.query("SELECT * FROM User", function(err, data) {
-        if(err) 
-            return console.log(err);
-        console.log(data);
-        res.send({ message: data[0] });
-    });
-});
-
 app.post('/api/reg', (req, res) => {
     const data = req.body;
     addNewUser(res, data.Login, data.Password, data.Name, data.Surname);
