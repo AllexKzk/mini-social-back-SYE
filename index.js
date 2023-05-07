@@ -14,6 +14,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+app.get('/api/', (req, res) => {
+    res.end();
+});
+
 app.post('/api/reg', (req, res) => {
     const data = req.body;
     addNewUser(res, data.Login, data.Password, data.Name, data.Surname);
