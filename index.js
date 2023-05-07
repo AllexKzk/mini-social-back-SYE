@@ -1,7 +1,6 @@
 const express = require('express');
-const cors = require('cors')
-const mysql = require('mysql')
-
+const cors = require('cors');
+const { addNewUser, authUser, getUser, updateProfileData } = require('./MySql/queries');
 const app = express();
 
 const corsOptions = {
@@ -13,22 +12,35 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-const pool = mysql.createPool({
-    host: 'ben1e8tljjivtlkrlih5-mysql.services.clever-cloud.com',
-    user: 'uv68wkbxill75bjc',
-    password: 'SQWjlU4uQEFBPGAmdUcL',
-    database: 'ben1e8tljjivtlkrlih5'
-});
-
+app.use(express.json());
 
 app.get('/api/', (req, res) => {
-    pool.query("SELECT message FROM test", function(err, data) {
+    pool.query("SELECT * FROM User", function(err, data) {
         if(err) 
             return console.log(err);
         console.log(data);
         res.send({ message: data[0] });
     });
+});
+
+app.post('/api/reg', (req, res) => {
+    const data = req.body;
+    addNewUser(res, data.Login, data.Password, data.Name, data.Surname);
+});
+
+app.put('/api/login', (req, res) => {
+    const data = req.body;
+    authUser(res, data.Login, data.Password);
+});
+
+app.put('/api/user', (req, res) => {
+    const data = req.body;
+    getUser(res, data.id);
+});
+
+app.put('/api/update-user', (req, res) => {
+    const data = req.body;
+    updateProfileData(res, data.id, data.field[0], data.field[1])
 });
 
 app.listen(5000);
