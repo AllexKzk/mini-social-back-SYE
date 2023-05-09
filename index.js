@@ -3,32 +3,28 @@ const cors = require('cors');
 const multer = require('multer');       //get images from Form
 const aws = require('aws-sdk');         //save in aws s3
 const multerS3 = require('multer-s3');  //from form to aws
-const { addNewUser, authUser, getUser, updateProfileData, createPost, collectPosts, likedPost, loadAvatar, storeFollow, delFollow, authByToken} = require('./MySql/queries');
 const app = express();
 
 const corsOptions = {
-  origin: '*',
+  origin: '*', //dev
   methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
   optionsSuccessStatus: 200, 
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'device-remember-token', 'Access-Control-Allow-Origin', 'Origin', 'Accept']
 };
+app.use(cors(corsOptions));
 
-//app.use(express.static('public'));
-//app.use('/images', express.static('images'));
-
-console.log(process.env.CYCLIC_BUCKET_NAME)
-console.log(process.env.AWS_ACCESS_KEY_ID)
-console.log(process.env.AWS_REGION)
-
+//store images with cyclic and AWS S3
 aws.config.update({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     sessionToken: process.env.AWS_SESSION_TOKEN,
     region: process.env.AWS_REGION
 });
+
 const s3 = new aws.S3();
 
+//thanks god smbd created multerS3
 const upload = multer({
     storage: multerS3({
         s3: s3,
@@ -39,83 +35,15 @@ const upload = multer({
     })
 });
 
-app.use(cors(corsOptions));
 app.use(express.json());
 
-app.get('/api/', (req, res) => {
-    res.end();
-});
-
-app.post('/api/reg', (req, res) => {
-    const data = req.body;
-    addNewUser(res, data.Login, data.Password, data.Name, data.Surname);
-});
-
-app.put('/api/login', (req, res) => {
-    const data = req.body;
-    authUser(res, data.Login, data.Password);
-});
-
-app.put('/api/user', (req, res) => {
-    const data = req.body;
-    getUser(res, data.id);
-});
-
-app.put('/api/update-user', (req, res) => {
-    const data = req.body;
-    updateProfileData(res, data.id, data.field[0], data.field[1])
-});
-
-app.put('/api/bytoken', (req, res) => {
-    const data = req.body;
-    authByToken(res, data.id, data.token, true);
-});
-
-app.post('/api/create-post', upload.single('caption-img'), (req, res) => {
-    const data = req.body;
-    const fileKey = req.file ? req.file.key : '';
-    createPost(res, fileKey, data.authorId, data.caption);
-});
-
-app.put('/api/get-posts', (req, res) => {
-    const data = req.body;
-    collectPosts(res, data.sources, data.reqUserId);
-});
-
-app.put('/api/like', (req, res) => {
-    const data = req.body;
-    likedPost(res, data.postId, data.authorId);
-});
-
-app.post('/api/load-avatar', upload.single('avatar'), (req, res) => {
-    const data = req.body;
-    loadAvatar(res, data.id, req.file.key);
-});
-
-app.put('/api/image', (req, res) => {
-    if (req.body.key){
-        const signedUrl = s3.getSignedUrl('getObject', {
-            Bucket: process.env.CYCLIC_BUCKET_NAME,
-            Key: req.body.key,
-            Expires: 1800
-        });
-        res.send( {signedSrc: signedUrl} );
-    }
-    else
-        res.status(404);
-    res.end();
-});
-
-app.post('/api/follow', (req, res) => {
-    const data = req.body;
-    console.log(data.userId, data.followerId)
-    storeFollow(res, data.userId, data.followerId);
-});
-
-app.post('/api/unfollow', (req, res) => {
-    const data = req.body;
-    console.log(data.userId, data.followerId)
-    delFollow(res, data.userId, data.followerId);
-});
-
 app.listen(5000);
+
+const get = require('./requests/GET/get');
+get(app);
+
+const put = require('./requests/PUT/put');
+put(app, s3);
+
+const post = require('./requests/POST/post');
+post(app, upload);
