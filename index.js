@@ -1,5 +1,4 @@
 const express = require('express');
-require('dotenv').config();
 const cors = require('cors');
 const multer = require('multer');       //get images from Form
 const aws = require('aws-sdk');         //save in aws s3
@@ -18,6 +17,10 @@ const corsOptions = {
 //app.use(express.static('public'));
 //app.use('/images', express.static('images'));
 
+console.log(process.env.CYCLIC_BUCKET_NAME)
+console.log(process.env.AWS_ACCESS_KEY_ID)
+console.log(process.env.AWS_REGION)
+
 aws.config.update({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -29,7 +32,7 @@ const s3 = new aws.S3();
 const upload = multer({
     storage: multerS3({
         s3: s3,
-        bucket: process.env.BUCKET,
+        bucket: process.env.CYCLIC_BUCKET_NAME,
         key: function (req, file, cb) {
             cb(null, Date.now().toString());
         }
