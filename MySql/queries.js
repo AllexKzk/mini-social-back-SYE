@@ -1,34 +1,51 @@
 const {pool} = require('./connect');
 const {hashString} = require('./hash');
 
-function authUser(res, login, password){
-    const hashPassword = hashString(password);
-
-    pool.query(`SELECT id, password FROM User WHERE login = '${login}' AND password = '${hashPassword}'`, function(err, users) {
-        if(err) 
-            return console.log(err);
-        if (users.length){                  //at least one user
-            return res.send({
-                id: users[0].id,
-                token: users[0].password,   //token is a lie
-            });
-        }
-        else                                //no matches
-            res.status(404);
-        res.end();
+function collectFollowers(res, userId, updata = null){
+    pool.query(`SELECT user AS id, u.name AS name, u.surname AS surname FROM Followers f
+                LEFT JOIN (SELECT id, name, surname FROM User) AS u 
+                ON f.user = u.id
+                WHERE f.follower = '${userId}
+                GROUP BY f.follower'`, 
+        function(err, follows){
+            if (err)
+                res.status(500);
+            else{
+                res.send({...updata, friends: follows});
+            }
+            res.end();
     });
 }
 
-function authUserByToken(res, id, token){
-    pool.query(`SELECT login FROM User WHERE id = '${id}' AND password = '${token}'`, function(err, users) {
+function authUser(res, login, password){
+    const hashPassword = hashString(password);
+
+    pool.query(`SELECT id, password FROM User
+                WHERE login = '${login}' AND password = '${hashPassword}'`, function(err, users) {
         if(err) 
             return console.log(err);
         if (users.length){                  //at least one user
-            res.status(200);
+            const updata = {
+                id: users[0].id,
+                token: users[0].password,   //token is a lie
+            };
+            collectFollowers(res, users[0].id, updata);
+            return ;
         }
-        else                                //no matches
-            res.status(404);
-        res.end();
+        res.status(404).end();             //no matches
+    });
+}
+
+function authByToken(res, id, token){
+    pool.query(`SELECT id, password FROM User
+                WHERE id = '${id}' AND password = '${token}'`, function(err, users) {
+        if(err) 
+            return console.log(err);
+        if (users.length){             
+            collectFollowers(res, users[0].id, users[0]);
+            return ;
+        }
+        res.status(404).end();
     });
 }
 
@@ -43,11 +60,14 @@ function addNewUser(res, login, password, name, surname) {
 }
 
 function getUser(res, id){
-    pool.query(`SELECT name, surname, bio, avatar FROM User WHERE id = '${id}'`, function(err, users) {
+    pool.query(`SELECT name, surname, bio, avatar FROM User u
+                WHERE u.id = '${id}'`, function(err, users) {
         if(err)
             return console.log(err);
-        if (users.length)
-            res.send(users[0]);
+        if (users.length){
+            collectFollowers(res, id, users[0]);
+            return ;
+        }
         else{
             res.statusMessage = "Uncorrect password or login";
             res.status(404);
@@ -61,6 +81,30 @@ function updateProfileData(res, id, field, value){
         if(err) {
             return console.log(err);
         }
+        res.end();
+    });
+}
+
+function storeFollow(res, userId, followerId) {
+    pool.query(`INSERT INTO Followers (user, follower) VALUES ('${userId}', '${followerId}')`, function(err){
+        if (err){
+            console.log(err);
+            res.status(500);
+        }
+        else
+            res.status(200);
+        res.end();
+    });
+}
+
+function delFollow(res, userId, followerId) {
+    pool.query(`DELETE FROM Followers WHERE user = '${userId}' AND follower = '${followerId}'`, function(err){
+        if (err){
+            console.log(err);
+            res.status(500);
+        }
+        else
+            res.status(200);
         res.end();
     });
 }
@@ -123,5 +167,5 @@ function loadAvatar(res, id, path){
     });
 }
 
-module.exports = {addNewUser, authUser, getUser, updateProfileData, authUserByToken, createPost, collectPosts, likedPost, loadAvatar};
+module.exports = {addNewUser, authUser, getUser, updateProfileData, createPost, collectPosts, likedPost, loadAvatar, storeFollow, delFollow, authByToken};
 

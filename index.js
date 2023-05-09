@@ -3,7 +3,7 @@ const cors = require('cors');
 const multer = require('multer');       //get images from Form
 const aws = require('aws-sdk');         //save in aws s3
 const multerS3 = require('multer-s3');  //from form to aws
-const { addNewUser, authUser, getUser, updateProfileData, authUserByToken, createPost, collectPosts, likedPost, loadAvatar } = require('./MySql/queries');
+const { addNewUser, authUser, getUser, updateProfileData, createPost, collectPosts, likedPost, loadAvatar, storeFollow, delFollow, authByToken} = require('./MySql/queries');
 const app = express();
 
 const corsOptions = {
@@ -68,12 +68,13 @@ app.put('/api/update-user', (req, res) => {
 
 app.put('/api/bytoken', (req, res) => {
     const data = req.body;
-    authUserByToken(res, data.id, data.token);
+    authByToken(res, data.id, data.token, true);
 });
 
 app.post('/api/create-post', upload.single('caption-img'), (req, res) => {
     const data = req.body;
-    createPost(res, req.file.key, data.authorId, data.caption);
+    const fileKey = req.file ? req.file.key : '';
+    createPost(res, fileKey, data.authorId, data.caption);
 });
 
 app.put('/api/get-posts', (req, res) => {
@@ -103,6 +104,18 @@ app.put('/api/image', (req, res) => {
     else
         res.status(404);
     res.end();
+});
+
+app.post('/api/follow', (req, res) => {
+    const data = req.body;
+    console.log(data.userId, data.followerId)
+    storeFollow(res, data.userId, data.followerId);
+});
+
+app.post('/api/unfollow', (req, res) => {
+    const data = req.body;
+    console.log(data.userId, data.followerId)
+    delFollow(res, data.userId, data.followerId);
 });
 
 app.listen(5000);
