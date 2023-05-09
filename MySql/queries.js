@@ -65,8 +65,8 @@ function updateProfileData(res, id, field, value){
     });
 }
 
-function createPost(res, file, authorId,  caption){
-    pool.query(`INSERT INTO Posts (author, image_path, caption) VALUES ('${authorId}', '${file.path}', '${caption}')`, function(err){
+function createPost(res, path, authorId,  caption){
+    pool.query(`INSERT INTO Posts (author, image_path, caption) VALUES ('${authorId}', '${path}', '${caption}')`, function(err){
         if (err)
             res.status(500);
         else
@@ -89,7 +89,6 @@ function collectPosts(res, sources, reqUserId){
                 res.status(500);
             }
             else{
-                console.log(collection);
                 res.send(collection);
             }
             res.end();
@@ -110,8 +109,8 @@ function likedPost(res, post_id, author_id){
     });
 }
 
-function loadAvatar(res, id, file){
-    pool.query(`UPDATE User SET avatar = '${file.path}' WHERE id = '${id}';`, 
+function loadAvatar(res, id, path){
+    pool.query(`UPDATE User SET avatar = '${path}' WHERE id = '${id}';`, 
         function(err){
             if (err){
                 console.log(err);

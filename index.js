@@ -1,7 +1,9 @@
 const express = require('express');
+require('dotenv').config();
 const cors = require('cors');
-const multer = require('multer');
-const upload = multer({ dest: 'images/' });
+const multer = require('multer');       //get images from Form
+const aws = require('aws-sdk');         //save in aws s3
+const multerS3 = require('multer-s3');  //from form to aws
 const { addNewUser, authUser, getUser, updateProfileData, authUserByToken, createPost, collectPosts, likedPost, loadAvatar } = require('./MySql/queries');
 const app = express();
 
@@ -12,8 +14,27 @@ const corsOptions = {
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'device-remember-token', 'Access-Control-Allow-Origin', 'Origin', 'Accept']
 };
-app.use(express.static('public'));
-app.use('/images', express.static('images'));
+
+//app.use(express.static('public'));
+//app.use('/images', express.static('images'));
+
+aws.config.update({
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    sessionToken: process.env.AWS_SESSION_TOKEN,
+    region: process.env.AWS_REGION
+});
+const s3 = new aws.S3();
+
+const upload = multer({
+    storage: multerS3({
+        s3: s3,
+        bucket: process.env.AWS_BUCKET,
+        key: function (req, file, cb) {
+            cb(null, Date.now().toString());
+        }
+    })
+});
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -49,7 +70,7 @@ app.put('/api/bytoken', (req, res) => {
 
 app.post('/api/create-post', upload.single('caption-img'), (req, res) => {
     const data = req.body;
-    createPost(res, req.file, data.authorId, data.caption);
+    createPost(res, req.file.key, data.authorId, data.caption);
 });
 
 app.put('/api/get-posts', (req, res) => {
@@ -64,7 +85,21 @@ app.put('/api/like', (req, res) => {
 
 app.post('/api/load-avatar', upload.single('avatar'), (req, res) => {
     const data = req.body;
-    loadAvatar(res, data.id, req.file);
+    loadAvatar(res, data.id, req.file.key);
+});
+
+app.put('/api/image', (req, res) => {
+    if (req.body.key){
+        const signedUrl = s3.getSignedUrl('getObject', {
+            Bucket: process.env.AWS_BUCKET,
+            Key: req.body.key,
+            Expires: 1800
+        });
+        res.send( {signedSrc: signedUrl} );
+    }
+    else
+        res.status(404);
+    res.end();
 });
 
 app.listen(5000);
