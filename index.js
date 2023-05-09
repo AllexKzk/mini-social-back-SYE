@@ -29,7 +29,7 @@ const s3 = new aws.S3();
 const upload = multer({
     storage: multerS3({
         s3: s3,
-        bucket: process.env.AWS_BUCKET,
+        bucket: process.env.CYCLIC_BUCKET_NAME,
         key: function (req, file, cb) {
             cb(null, Date.now().toString());
         }
@@ -91,7 +91,7 @@ app.post('/api/load-avatar', upload.single('avatar'), (req, res) => {
 app.put('/api/image', (req, res) => {
     if (req.body.key){
         const signedUrl = s3.getSignedUrl('getObject', {
-            Bucket: process.env.AWS_BUCKET,
+            Bucket: process.env.CYCLIC_BUCKET_NAME,
             Key: req.body.key,
             Expires: 1800
         });
