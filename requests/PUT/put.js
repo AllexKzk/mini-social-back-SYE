@@ -23,7 +23,7 @@ module.exports = function(app, s3){
 
     app.put('/api/get-posts', (req, res) => {
         const data = req.body;
-        collectPosts(res, data.sources, data.reqUserId);
+        collectPosts(res, data.sources, data.reqUserId, data.minId);
     });
 
     app.put('/api/like', (req, res) => {

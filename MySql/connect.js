@@ -5,7 +5,7 @@ const pool = mysql.createPool({                                     //its better
     user: 'uv68wkbxill75bjc',
     password: 'SQWjlU4uQEFBPGAmdUcL',
     database: 'ben1e8tljjivtlkrlih5',
-    connectionLimit : 5,
+    connectionLimit : 4,
 });
 
 pool.on('enqueue', function () {

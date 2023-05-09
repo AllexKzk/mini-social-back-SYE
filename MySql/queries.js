@@ -119,14 +119,16 @@ function createPost(res, path, authorId,  caption){
     })
 }
 
-function collectPosts(res, sources, reqUserId){
+function collectPosts(res, sources, reqUserId, maxId){
+    const limitForId = maxId !== '0' ? `p.id < ${maxId}` : 'p.id > 0';
     pool.query(`SELECT p.id, p.author AS authorId, u.name AS authorName, u.surname AS authorSurname, p.caption, p.image_path AS imagePath, l.likes AS likes, l.liked AS liked  
                 FROM Posts p
                 LEFT JOIN User u ON u.id = p.author
                 LEFT JOIN (SELECT COUNT(author_id) AS likes, post_id, IF( FIND_IN_SET('${reqUserId}', GROUP_CONCAT(author_id)), True, False) AS liked
                             FROM Likes GROUP BY post_id) l ON l.post_id  = p.id
-                WHERE FIND_IN_SET(p.author, "${sources.join()}") > 0 
-                ORDER BY p.id DESC;`, 
+                WHERE FIND_IN_SET(p.author, "${sources.join()}") > 0 AND ${limitForId} 
+                ORDER BY p.id DESC
+                LIMIT 1;`, 
         function(err, collection){
             if (err){
                 console.log(err);
