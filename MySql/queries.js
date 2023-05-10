@@ -24,8 +24,11 @@ function authUser(res, login, password){
     
     connection.query(`SELECT id, password FROM User
                 WHERE login = '${login}' AND password = '${hashPassword}'`, function(err, users) {
-        if(err) 
+        if(err){
+            res.statusMessage = err;
+            res.status(500).end();
             return console.log(err);
+        }
         if (users.length){                  //at least one user
             const updata = {
                 id: users[0].id,
@@ -34,6 +37,7 @@ function authUser(res, login, password){
             collectFollowers(res, users[0].id, updata);
             return ;
         }
+        res.statusMessage = 'Wrong login or password';
         res.status(404).end();             //no matches
     });
     

@@ -23,14 +23,12 @@ module.exports = function(app, upload){
     //reg new follower
     app.post('/api/follow', (req, res) => {
         const data = req.body;
-        console.log(data.userId, data.followerId)
         storeFollow(res, data.userId, data.followerId);
     });
 
     //delete follower
     app.post('/api/unfollow', (req, res) => {
         const data = req.body;
-        console.log(data.userId, data.followerId)
         delFollow(res, data.userId, data.followerId);
     });
 }
