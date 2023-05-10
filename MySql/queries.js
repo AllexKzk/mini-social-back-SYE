@@ -10,8 +10,7 @@ function collectFollowers(res, userId, updata = null){
                 GROUP BY f.follower'`, 
         function(err, follows){
             if (err){
-                res.statusMessage = err.message;
-                res.status(500);
+                return console.log(err);
             }
             else{
                 res.send({...updata, friends: follows});
@@ -50,8 +49,7 @@ function authByToken(res, id, token){
     connection.query(`SELECT id, password FROM User
                 WHERE id = '${id}' AND password = '${token}'`, function(err, users) {
         if(err) {
-            res.statusMessage = err.message;
-            res.status(500);
+            return console.log(err);
         }
         if (users.length){             
             collectFollowers(res, users[0].id, users[0]);
@@ -67,8 +65,7 @@ function addNewUser(res, login, password, name, surname) {
     
     connection.query(`INSERT INTO User (login, password, name, surname) VALUES ('${login}', '${hashPassword}', '${name}', '${surname}');`, function(err) {
         if(err) {
-            res.statusMessage = err.message;
-            res.status(500);
+            return console.log(err);
         }
         
         authUser(res, login, password);
@@ -80,8 +77,7 @@ function getUser(res, id){
     connection.query(`SELECT name, surname, bio, avatar FROM User u
                 WHERE u.id = '${id}'`, function(err, users) {
         if(err){
-            res.statusMessage = err.message;
-            res.status(500);
+            return console.log(err);
         }
         if (users.length){
             collectFollowers(res, id, users[0]);
@@ -100,8 +96,7 @@ function updateProfileData(res, id, field, value){
     
     connection.query(`UPDATE User SET ${field} = '${value}' WHERE id = '${id}'`, function(err) {
         if(err) {
-            res.statusMessage = err.message;
-            res.status(500);
+            return console.log(err);
         }
         res.end();
         
@@ -112,8 +107,7 @@ function storeFollow(res, userId, followerId) {
     
     connection.query(`INSERT INTO Followers (user, follower) VALUES ('${userId}', '${followerId}')`, function(err){
         if (err){
-            res.statusMessage = err.message;
-            res.status(500);
+            return console.log(err);
         }
         else
             res.status(200);
@@ -126,8 +120,7 @@ function delFollow(res, userId, followerId) {
     
     connection.query(`DELETE FROM Followers WHERE user = '${userId}' AND follower = '${followerId}'`, function(err){
         if (err){
-            res.statusMessage = err.message;
-            res.status(500);
+            return console.log(err);
         }
         else
             res.status(200);
@@ -140,8 +133,7 @@ function createPost(res, path, authorId,  caption){
     
     connection.query(`INSERT INTO Posts (author, image_path, caption) VALUES ('${authorId}', '${path}', '${caption}')`, function(err){
         if (err){
-            res.statusMessage = err.message;
-                res.status(500);
+            return console.log(err);
         }
         else
             res.status(200)
@@ -163,8 +155,7 @@ function collectPosts(res, sources, reqUserId, maxId){
                 LIMIT 2;`, 
         function(err, collection){
             if (err){
-                res.statusMessage = err.message;
-                res.status(500);
+                return console.log(err);
             }
             else{
                 res.send(collection);
@@ -179,8 +170,7 @@ function likedPost(res, post_id, author_id){
     connection.query(`INSERT INTO Likes (post_id, author_id) VALUES (${post_id}, ${author_id});`, 
         function(err){
             if (err){
-                res.statusMessage = err.message;
-                res.status(500);
+                return console.log(err);
             }
             else{
                 res.status(200);
@@ -195,8 +185,7 @@ function loadAvatar(res, id, path){
     connection.query(`UPDATE User SET avatar = '${path}' WHERE id = '${id}';`, 
         function(err){
             if (err){
-                res.statusMessage = err.message;
-                res.status(500);
+                return console.log(err);
             }
             else{
                 res.status(200);
