@@ -1,8 +1,9 @@
-const {pool} = require('./connect');
+const {connection} = require('./connect');
 const {hashString} = require('./hash');
 
 function collectFollowers(res, userId, updata = null){
-    pool.query(`SELECT user AS id, u.name AS name, u.surname AS surname FROM Followers f
+    
+    connection.query(`SELECT user AS id, u.name AS name, u.surname AS surname FROM Followers f
                 LEFT JOIN (SELECT id, name, surname FROM User) AS u 
                 ON f.user = u.id
                 WHERE f.follower = '${userId}
@@ -14,13 +15,14 @@ function collectFollowers(res, userId, updata = null){
                 res.send({...updata, friends: follows});
             }
             res.end();
+            
     });
 }
 
 function authUser(res, login, password){
     const hashPassword = hashString(password);
-
-    pool.query(`SELECT id, password FROM User
+    
+    connection.query(`SELECT id, password FROM User
                 WHERE login = '${login}' AND password = '${hashPassword}'`, function(err, users) {
         if(err) 
             return console.log(err);
@@ -34,10 +36,12 @@ function authUser(res, login, password){
         }
         res.status(404).end();             //no matches
     });
+    
 }
 
 function authByToken(res, id, token){
-    pool.query(`SELECT id, password FROM User
+    
+    connection.query(`SELECT id, password FROM User
                 WHERE id = '${id}' AND password = '${token}'`, function(err, users) {
         if(err) 
             return console.log(err);
@@ -46,21 +50,24 @@ function authByToken(res, id, token){
             return ;
         }
         res.status(404).end();
+        
     });
 }
 
 function addNewUser(res, login, password, name, surname) {
     const hashPassword = hashString(password);
-
-    pool.query(`INSERT INTO User (login, password, name, surname) VALUES ('${login}', '${hashPassword}', '${name}', '${surname}');`, function(err) {
+    
+    connection.query(`INSERT INTO User (login, password, name, surname) VALUES ('${login}', '${hashPassword}', '${name}', '${surname}');`, function(err) {
         if(err) 
             return console.log(err);
+        
         authUser(res, login, password);
     });
 }
 
 function getUser(res, id){
-    pool.query(`SELECT name, surname, bio, avatar FROM User u
+    
+    connection.query(`SELECT name, surname, bio, avatar FROM User u
                 WHERE u.id = '${id}'`, function(err, users) {
         if(err)
             return console.log(err);
@@ -73,20 +80,24 @@ function getUser(res, id){
             res.status(404);
         }
         res.end();
+        
     });
 }
 
 function updateProfileData(res, id, field, value){
-    pool.query(`UPDATE User SET ${field} = '${value}' WHERE id = '${id}'`, function(err) {
+    
+    connection.query(`UPDATE User SET ${field} = '${value}' WHERE id = '${id}'`, function(err) {
         if(err) {
             return console.log(err);
         }
         res.end();
+        
     });
 }
 
 function storeFollow(res, userId, followerId) {
-    pool.query(`INSERT INTO Followers (user, follower) VALUES ('${userId}', '${followerId}')`, function(err){
+    
+    connection.query(`INSERT INTO Followers (user, follower) VALUES ('${userId}', '${followerId}')`, function(err){
         if (err){
             console.log(err);
             res.status(500);
@@ -94,11 +105,13 @@ function storeFollow(res, userId, followerId) {
         else
             res.status(200);
         res.end();
+        
     });
 }
 
 function delFollow(res, userId, followerId) {
-    pool.query(`DELETE FROM Followers WHERE user = '${userId}' AND follower = '${followerId}'`, function(err){
+    
+    connection.query(`DELETE FROM Followers WHERE user = '${userId}' AND follower = '${followerId}'`, function(err){
         if (err){
             console.log(err);
             res.status(500);
@@ -106,29 +119,33 @@ function delFollow(res, userId, followerId) {
         else
             res.status(200);
         res.end();
+        
     });
 }
 
 function createPost(res, path, authorId,  caption){
-    pool.query(`INSERT INTO Posts (author, image_path, caption) VALUES ('${authorId}', '${path}', '${caption}')`, function(err){
+    
+    connection.query(`INSERT INTO Posts (author, image_path, caption) VALUES ('${authorId}', '${path}', '${caption}')`, function(err){
         if (err)
             res.status(500);
         else
             res.status(200)
         res.end();
+        
     })
 }
 
 function collectPosts(res, sources, reqUserId, maxId){
+    
     const limitForId = maxId !== '0' ? `p.id < ${maxId}` : 'p.id > 0';
-    pool.query(`SELECT p.id, p.author AS authorId, u.name AS authorName, u.surname AS authorSurname, p.caption, p.image_path AS imagePath, l.likes AS likes, l.liked AS liked  
+    connection.query(`SELECT p.id, p.author AS authorId, u.name AS authorName, u.surname AS authorSurname, p.caption, p.image_path AS imagePath, l.likes AS likes, l.liked AS liked  
                 FROM Posts p
                 LEFT JOIN User u ON u.id = p.author
                 LEFT JOIN (SELECT COUNT(author_id) AS likes, post_id, IF( FIND_IN_SET('${reqUserId}', GROUP_CONCAT(author_id)), True, False) AS liked
                             FROM Likes GROUP BY post_id) l ON l.post_id  = p.id
                 WHERE FIND_IN_SET(p.author, "${sources.join()}") > 0 AND ${limitForId} 
                 ORDER BY p.id DESC
-                LIMIT 1;`, 
+                LIMIT 2;`, 
         function(err, collection){
             if (err){
                 console.log(err);
@@ -138,11 +155,13 @@ function collectPosts(res, sources, reqUserId, maxId){
                 res.send(collection);
             }
             res.end();
+            
     });
 }
 
 function likedPost(res, post_id, author_id){
-    pool.query(`INSERT INTO Likes (post_id, author_id) VALUES (${post_id}, ${author_id});`, 
+    
+    connection.query(`INSERT INTO Likes (post_id, author_id) VALUES (${post_id}, ${author_id});`, 
         function(err){
             if (err){
                 console.log(err);
@@ -152,11 +171,13 @@ function likedPost(res, post_id, author_id){
                 res.status(200);
             }
             res.end();
+            
     });
 }
 
 function loadAvatar(res, id, path){
-    pool.query(`UPDATE User SET avatar = '${path}' WHERE id = '${id}';`, 
+    
+    connection.query(`UPDATE User SET avatar = '${path}' WHERE id = '${id}';`, 
         function(err){
             if (err){
                 console.log(err);
@@ -167,6 +188,7 @@ function loadAvatar(res, id, path){
             }
             res.end();
     });
+    
 }
 
 module.exports = {addNewUser, authUser, getUser, updateProfileData, createPost, collectPosts, likedPost, loadAvatar, storeFollow, delFollow, authByToken};
