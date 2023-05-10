@@ -9,8 +9,10 @@ function collectFollowers(res, userId, updata = null){
                 WHERE f.follower = '${userId}
                 GROUP BY f.follower'`, 
         function(err, follows){
-            if (err)
+            if (err){
+                res.statusMessage = err.message;
                 res.status(500);
+            }
             else{
                 res.send({...updata, friends: follows});
             }
@@ -47,8 +49,10 @@ function authByToken(res, id, token){
     
     connection.query(`SELECT id, password FROM User
                 WHERE id = '${id}' AND password = '${token}'`, function(err, users) {
-        if(err) 
-            return console.log(err);
+        if(err) {
+            res.statusMessage = err.message;
+            res.status(500);
+        }
         if (users.length){             
             collectFollowers(res, users[0].id, users[0]);
             return ;
@@ -62,8 +66,10 @@ function addNewUser(res, login, password, name, surname) {
     const hashPassword = hashString(password);
     
     connection.query(`INSERT INTO User (login, password, name, surname) VALUES ('${login}', '${hashPassword}', '${name}', '${surname}');`, function(err) {
-        if(err) 
-            return console.log(err);
+        if(err) {
+            res.statusMessage = err.message;
+            res.status(500);
+        }
         
         authUser(res, login, password);
     });
@@ -73,8 +79,10 @@ function getUser(res, id){
     
     connection.query(`SELECT name, surname, bio, avatar FROM User u
                 WHERE u.id = '${id}'`, function(err, users) {
-        if(err)
-            return console.log(err);
+        if(err){
+            res.statusMessage = err.message;
+            res.status(500);
+        }
         if (users.length){
             collectFollowers(res, id, users[0]);
             return ;
@@ -92,7 +100,8 @@ function updateProfileData(res, id, field, value){
     
     connection.query(`UPDATE User SET ${field} = '${value}' WHERE id = '${id}'`, function(err) {
         if(err) {
-            return console.log(err);
+            res.statusMessage = err.message;
+            res.status(500);
         }
         res.end();
         
@@ -103,7 +112,7 @@ function storeFollow(res, userId, followerId) {
     
     connection.query(`INSERT INTO Followers (user, follower) VALUES ('${userId}', '${followerId}')`, function(err){
         if (err){
-            console.log(err);
+            res.statusMessage = err.message;
             res.status(500);
         }
         else
@@ -117,7 +126,7 @@ function delFollow(res, userId, followerId) {
     
     connection.query(`DELETE FROM Followers WHERE user = '${userId}' AND follower = '${followerId}'`, function(err){
         if (err){
-            console.log(err);
+            res.statusMessage = err.message;
             res.status(500);
         }
         else
@@ -130,8 +139,10 @@ function delFollow(res, userId, followerId) {
 function createPost(res, path, authorId,  caption){
     
     connection.query(`INSERT INTO Posts (author, image_path, caption) VALUES ('${authorId}', '${path}', '${caption}')`, function(err){
-        if (err)
-            res.status(500);
+        if (err){
+            res.statusMessage = err.message;
+                res.status(500);
+        }
         else
             res.status(200)
         res.end();
@@ -152,7 +163,7 @@ function collectPosts(res, sources, reqUserId, maxId){
                 LIMIT 2;`, 
         function(err, collection){
             if (err){
-                console.log(err);
+                res.statusMessage = err.message;
                 res.status(500);
             }
             else{
@@ -168,7 +179,7 @@ function likedPost(res, post_id, author_id){
     connection.query(`INSERT INTO Likes (post_id, author_id) VALUES (${post_id}, ${author_id});`, 
         function(err){
             if (err){
-                console.log(err);
+                res.statusMessage = err.message;
                 res.status(500);
             }
             else{
@@ -184,7 +195,7 @@ function loadAvatar(res, id, path){
     connection.query(`UPDATE User SET avatar = '${path}' WHERE id = '${id}';`, 
         function(err){
             if (err){
-                console.log(err);
+                res.statusMessage = err.message;
                 res.status(500);
             }
             else{
