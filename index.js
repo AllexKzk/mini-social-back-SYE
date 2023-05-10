@@ -47,3 +47,6 @@ put(app, s3);
 
 const post = require('./requests/POST/post');
 post(app, upload);
+
+const sockets = require('./sockets/socket');
+sockets(app);
