@@ -1,4 +1,10 @@
-const http = require('http');
+/*
+    Unfortunately Cyclic doesn't support SocketIO
+    But it'll be perfect to build connections and update content 
+    when sockets emit broadcast:
+        [go to profile] -> [join profile's Room] -> [profile broadcasts about new content] -> [update pages connected to profile Room]
+*/
+/*const http = require('http');
 const { Server } = require("socket.io");
 
 module.exports = function(app){
@@ -30,5 +36,5 @@ module.exports = function(app){
     });
 
     server.listen(4000);
-}
+}*/
 
