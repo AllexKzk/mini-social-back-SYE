@@ -1,11 +1,10 @@
 const mysql = require('mysql');
 
-const connection = mysql.createConnection({                                     //its better to use ENV params
-    host: 'ben1e8tljjivtlkrlih5-mysql.services.clever-cloud.com',
-    user: 'uv68wkbxill75bjc',
-    password: 'SQWjlU4uQEFBPGAmdUcL',
-    database: 'ben1e8tljjivtlkrlih5',
-//    connectionLimit : 1,
+const connection = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
 });
 
 module.exports.connection = connection;
